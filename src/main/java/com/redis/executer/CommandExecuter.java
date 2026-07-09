@@ -29,6 +29,16 @@ public class CommandExecuter {
         handlers.put("HSET", new HSetCommand(database, aof));
 
         handlers.put("HGET", new HGetCommand(database));
+
+        handlers.put("LPUSH", new LPushCommand(database, aof));
+
+        handlers.put("LPOP", new LPopCommand(database, aof));
+
+        handlers.put("RPUSH", new RPushCommand(database, aof));
+
+        handlers.put("RPOP", new RPopCommand(database, aof));
+
+        handlers.put("LRANGE", new LRangeCommand(database));
     }
 
     public String execute(Command command) {

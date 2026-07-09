@@ -1,9 +1,11 @@
 package com.redis.storage;
 
 import com.redis.model.RedisHash;
+import com.redis.model.RedisList;
 import com.redis.model.RedisObject;
 import com.redis.model.RedisString;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -58,6 +60,73 @@ public class MemoryDatabase {
         }
         RedisHash hash = (RedisHash) object;
         return hash.get(field);
+    }
+
+    public int lpush(String key, String value) {
+
+        RedisObject object = storage.get(key);
+        RedisList list;
+
+        if (object == null) {
+            list = new RedisList();
+            storage.put(key, list);
+        } else if (object instanceof RedisList) {
+            list = (RedisList) object;
+        } else {
+            throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+        }
+        list.lpush(value);
+        return list.size();
+    }
+
+    public int rpush(String key, String value) {
+
+        RedisObject object = storage.get(key);
+        RedisList list;
+
+        if (object == null) {
+            list = new RedisList();
+            storage.put(key, list);
+        } else if (object instanceof RedisList) {
+            list = (RedisList) object;
+        } else {
+            throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+        }
+        list.rpush(value);
+        return list.size();
+    }
+
+    public String lpop(String key) {
+
+        RedisObject object = storage.get(key);
+
+        if (!(object instanceof RedisList)) {
+            return null;
+        }
+        RedisList list = (RedisList) object;
+        return list.lpop();
+    }
+
+    public String rpop(String key) {
+
+        RedisObject object = storage.get(key);
+
+        if (!(object instanceof RedisList)) {
+            return null;
+        }
+        RedisList list = (RedisList) object;
+        return list.rpop();
+    }
+
+    public List<String> lrange(String key, int start, int end) {
+
+        RedisObject object = storage.get(key);
+        if (!(object instanceof RedisList)) {
+            return List.of();
+        }
+
+        RedisList list = (RedisList) object;
+        return list.lrange(start, end);
     }
 
     public boolean delete(String key) {
