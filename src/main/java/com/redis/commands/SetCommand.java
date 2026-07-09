@@ -3,6 +3,9 @@ package com.redis.commands;
 import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
+import com.redis.response.ErrorResponse;
+import com.redis.response.Response;
+import com.redis.response.SimpleStringResponse;
 import com.redis.storage.MemoryDatabase;
 
 import java.util.List;
@@ -21,10 +24,10 @@ public class SetCommand implements CommandHandler {
     }
 
     @Override
-    public String execute(List<String> arguments) {
+    public Response execute(List<String> arguments) {
 
         if (arguments.size() != 2) {
-            return "ERROR: SET requires key and value";
+            return new ErrorResponse("SET requires key and value");
         }
 
         String key = arguments.get(0);
@@ -38,7 +41,7 @@ public class SetCommand implements CommandHandler {
         database.set(key, value);
 
 //        database.set(arguments.get(0), arguments.get(1));
-        return "OK";
+        return new SimpleStringResponse("OK");
     }
 
 }

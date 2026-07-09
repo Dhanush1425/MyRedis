@@ -4,6 +4,8 @@ import com.redis.command.Command;
 import com.redis.commands.*;
 //import com.redis.commands.HGetCommand;
 import com.redis.persistence.AppendOnlyFile;
+import com.redis.response.ErrorResponse;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 
 import java.util.HashMap;
@@ -41,18 +43,18 @@ public class CommandExecuter {
         handlers.put("LRANGE", new LRangeCommand(database));
     }
 
-    public String execute(Command command) {
+    public Response execute(Command command) {
 
         CommandHandler handler = handlers.get(command.commandName().toUpperCase());
 
         if (handler == null) {
-            return "ERROR: Unknown Command";
+            return new ErrorResponse("Unknown Command");
         }
 
         try {
             return handler.execute(command.arguments());
-        } catch (IllegalArgumentException e) {
-            return e.getMessage();
+        }catch (IllegalArgumentException e) {
+            return new ErrorResponse(e.getMessage());
         }
     }
 }

@@ -4,6 +4,9 @@ import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
 import com.redis.protocol.RESPEncoder;
+import com.redis.response.ErrorResponse;
+import com.redis.response.IntegerResponse;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 
 import java.util.List;
@@ -22,11 +25,10 @@ public class LPushCommand implements CommandHandler {
     }
 
     @Override
-    public String execute(List<String> args) {
+    public Response execute(List<String> args) {
 
         if (args.size() != 2) {
-            return "ERROR: LPUSH requires key and value";
-        }
+            return new ErrorResponse("LPUSH requires key and value");        }
 
         String key = args.get(0);
         String value = args.get(1);
@@ -34,12 +36,10 @@ public class LPushCommand implements CommandHandler {
         int size = database.lpush(key, value);
 
         if (!RecoveryContext.isRecovering()) {
-
             String resp = encoder.encode("LPUSH", List.of(key, value));
-
             aof.append(resp);
         }
 
-        return String.valueOf(size);
+        return new IntegerResponse(size);
     }
 }

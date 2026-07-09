@@ -4,6 +4,9 @@ import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
 import com.redis.protocol.RESPEncoder;
+import com.redis.response.ErrorResponse;
+import com.redis.response.IntegerResponse;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 
 import java.util.List;
@@ -21,11 +24,10 @@ public class DeleteCommand implements CommandHandler {
     }
 
     @Override
-    public String execute(List<String> args) {
+    public Response execute(List<String> args) {
 
         if (args.size() != 1) {
-            return "ERROR: DEL requires key";
-        }
+            return new ErrorResponse("DEL requires key");        }
 
         String key = args.get(0);
         boolean deleted = database.delete(key);
@@ -34,6 +36,6 @@ public class DeleteCommand implements CommandHandler {
             String resp = encoder.encode("DEL", List.of(key));
             aof.append(resp);
         }
-        return deleted ? "1" : "0";
+        return new IntegerResponse(deleted ? 1 : 0);
     }
 }

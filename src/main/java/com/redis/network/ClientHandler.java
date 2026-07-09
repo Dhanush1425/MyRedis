@@ -2,10 +2,8 @@ package com.redis.network;
 
 import com.redis.command.Command;
 import com.redis.executer.CommandExecuter;
-import com.redis.protocol.CommandParser;
-import com.redis.protocol.RESPEncoder;
-import com.redis.protocol.RESPParser;
-import com.redis.protocol.RESPReader;
+import com.redis.protocol.*;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 
 import java.io.IOException;
@@ -21,9 +19,11 @@ public class ClientHandler {
     private final RESPReader reader = new RESPReader();
     private final RESPParser parser = new RESPParser();
 
-    private final RESPEncoder encoder = new RESPEncoder();
+//    private final RESPEncoder encoder = new RESPEncoder();
 
     private final CommandExecuter executer;
+
+    private final RESPResponseEncoder responseEncoder = new RESPResponseEncoder();
 
     public ClientHandler(CommandExecuter executer) {
         this.executer = executer;
@@ -65,9 +65,9 @@ public class ClientHandler {
         Command command = parser.parse(request);// resp
         System.out.println("Command : "+command);
 
-        String result = executer.execute(command);
+        Response result = executer.execute(command);
 
-        String resp = encoder.encode(result);
+        String resp = responseEncoder.encode(result);
         ByteBuffer response = ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8));
 
 //        ByteBuffer response = ByteBuffer.wrap(          // for normal string respose

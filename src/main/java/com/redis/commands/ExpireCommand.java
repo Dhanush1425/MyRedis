@@ -3,6 +3,9 @@ package com.redis.commands;
 import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
+import com.redis.response.ErrorResponse;
+import com.redis.response.IntegerResponse;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 
 import java.util.List;
@@ -23,10 +26,10 @@ public class ExpireCommand implements CommandHandler {
     }
 
     @Override
-    public String execute(List<String> arguments) {
+    public Response execute(List<String> arguments) {
 
         if (arguments.size() != 2) {
-            return "ERROR: EXPIRE requires key and seconds";
+            return new ErrorResponse("EXPIRE requires key and seconds");
         }
         String key = arguments.get(0);
         long seconds;
@@ -34,7 +37,7 @@ public class ExpireCommand implements CommandHandler {
         try {
             seconds = Long.parseLong(arguments.get(1));
         } catch (NumberFormatException e) {
-            return "ERROR: Invalid expiry";
+            return new ErrorResponse("Invalid Expiry");
         }
 
 //        aof.append("EXPIRE " + key + " " + seconds);
@@ -46,8 +49,7 @@ public class ExpireCommand implements CommandHandler {
 
         boolean success = database.expire(key, seconds);
 
-        return success ? "1" : "0";
-
+        return new IntegerResponse(success ? 1 : 0);
     }
 
 }

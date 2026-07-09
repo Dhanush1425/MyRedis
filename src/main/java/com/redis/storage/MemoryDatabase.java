@@ -33,7 +33,7 @@ public class MemoryDatabase {
         return stringObject.getValue();
     }
 
-    public void hset(String key, String field, String value){
+    public int hset(String key, String field, String value){
         RedisObject object = storage.get(key);
         RedisHash hash;
         if (object == null){
@@ -46,6 +46,7 @@ public class MemoryDatabase {
                     "WRONGTYPE Operation against a key holding the wrong kind of value");
         }
         hash.put(field, value);// here only actually adding fields in that RedisHash
+        return 0;
     }
 
 

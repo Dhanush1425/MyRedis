@@ -1,5 +1,8 @@
 package com.redis.commands;
 
+import com.redis.response.ArrayResponse;
+import com.redis.response.ErrorResponse;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 import java.util.List;
 
@@ -12,10 +15,10 @@ public class LRangeCommand implements CommandHandler {
     }
 
     @Override
-    public String execute(List<String> args) {
+    public Response execute(List<String> args) {
 
         if (args.size() != 3) {
-            return "ERROR: LRANGE requires key start end";
+            return new ErrorResponse("LRANGE requires key start stop");
         }
 
         String key = args.get(0);
@@ -25,10 +28,6 @@ public class LRangeCommand implements CommandHandler {
 
         List<String> values = database.lrange(key, start, end);
 
-        if (values.isEmpty()) {
-            return "(empty list)";
-        }
-
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < values.size(); i++) {
             result.append(i + 1)
@@ -37,6 +36,6 @@ public class LRangeCommand implements CommandHandler {
                     .append(" ");
         }
 
-        return result.toString();
+        return new ArrayResponse(values);
     }
 }

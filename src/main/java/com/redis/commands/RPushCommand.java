@@ -4,6 +4,9 @@ import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
 import com.redis.protocol.RESPEncoder;
+import com.redis.response.ErrorResponse;
+import com.redis.response.IntegerResponse;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 
 import java.util.List;
@@ -20,10 +23,10 @@ public class RPushCommand implements CommandHandler {
     }
 
     @Override
-    public String execute(List<String> args) {
+    public Response execute(List<String> args) {
 
         if (args.size() != 2) {
-            return "ERROR: RPUSH requires key and value";
+            return new ErrorResponse("RPUSH requires key and value");
         }
 
         String key = args.get(0);
@@ -36,6 +39,6 @@ public class RPushCommand implements CommandHandler {
             aof.append(resp);
         }
 
-        return String.valueOf(size);
+        return new IntegerResponse(size);
     }
 }

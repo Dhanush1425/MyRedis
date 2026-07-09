@@ -1,7 +1,9 @@
 package com.redis.commands;
 
+import com.redis.response.Response;
+
 import java.util.List;
 
 public interface CommandHandler {
-    String execute(List<String > arguments);
+    Response execute(List<String > arguments);
 }

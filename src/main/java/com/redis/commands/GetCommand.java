@@ -1,5 +1,8 @@
 package com.redis.commands;
 
+import com.redis.response.BulkStringResponse;
+import com.redis.response.ErrorResponse;
+import com.redis.response.Response;
 import com.redis.storage.MemoryDatabase;
 
 import java.util.List;
@@ -15,17 +18,14 @@ public class GetCommand implements CommandHandler {
     }
 
     @Override
-    public String execute(List<String> arguments) {
+    public Response execute(List<String> arguments) {
 
         if (arguments.size() != 1) {
-
-            return "ERROR: GET requires key";
-
+            return new ErrorResponse("GET requires key");
         }
 
         String value = database.get(arguments.get(0));
-
-        return value == null ? "(nil)" : value;
+        return new BulkStringResponse(value);
 
     }
 
