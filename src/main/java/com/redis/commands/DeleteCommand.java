@@ -4,6 +4,8 @@ import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
 import com.redis.protocol.RESPEncoder;
+import com.redis.replication.ReplicaManager;
+import com.redis.replication.ReplicationContext;
 import com.redis.response.ErrorResponse;
 import com.redis.response.IntegerResponse;
 import com.redis.response.Response;
@@ -15,12 +17,16 @@ public class DeleteCommand implements CommandHandler {
 
     private final MemoryDatabase database;
     private final AppendOnlyFile aof;
+    private final ReplicaManager replicaManager;
+
+
     private final RESPCommandEncoder encoder = new RESPCommandEncoder();
 
 
-    public DeleteCommand(MemoryDatabase database, AppendOnlyFile aof) {
+    public DeleteCommand(MemoryDatabase database, AppendOnlyFile aof, ReplicaManager replicaManager) {
         this.database = database;
         this.aof = aof;
+        this.replicaManager = replicaManager;
     }
 
     @Override
@@ -35,7 +41,9 @@ public class DeleteCommand implements CommandHandler {
         if (deleted && !RecoveryContext.isRecovering()) {
             String resp = encoder.encode("DEL", List.of(key));
             aof.append(resp);
-        }
+            if (!ReplicationContext.isReplicating()) {
+                replicaManager.broadcast(resp);
+            }        }
         return new IntegerResponse(deleted ? 1 : 0);
     }
 }

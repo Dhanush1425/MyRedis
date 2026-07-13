@@ -4,6 +4,8 @@ import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
 import com.redis.protocol.RESPEncoder;
+import com.redis.replication.ReplicaManager;
+import com.redis.replication.ReplicationContext;
 import com.redis.response.BulkStringResponse;
 import com.redis.response.ErrorResponse;
 import com.redis.response.Response;
@@ -15,11 +17,14 @@ public class RPopCommand implements CommandHandler {
 
     private final MemoryDatabase database;
     private final AppendOnlyFile aof;
+    private final ReplicaManager replicaManager;
+
     private final RESPCommandEncoder encoder = new RESPCommandEncoder();
 
-    public RPopCommand(MemoryDatabase database, AppendOnlyFile aof) {
+    public RPopCommand(MemoryDatabase database, AppendOnlyFile aof, ReplicaManager replicaManager) {
         this.database = database;
         this.aof = aof;
+        this.replicaManager = replicaManager;
     }
 
     @Override
@@ -35,6 +40,9 @@ public class RPopCommand implements CommandHandler {
         if (!RecoveryContext.isRecovering()) {
             String resp = encoder.encode("RPOP", List.of(key));
             aof.append(resp);
+            if (!ReplicationContext.isReplicating()) {
+                replicaManager.broadcast(resp);
+            }
         }
         return new BulkStringResponse(value);
     }

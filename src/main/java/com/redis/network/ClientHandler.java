@@ -3,7 +3,12 @@ package com.redis.network;
 import com.redis.command.Command;
 import com.redis.executer.CommandExecuter;
 import com.redis.protocol.*;
+import com.redis.pubsub.PubSubManager;
+import com.redis.replication.ReplicaManager;
+import com.redis.response.ErrorResponse;
+import com.redis.response.IntegerResponse;
 import com.redis.response.Response;
+import com.redis.response.SimpleStringResponse;
 import com.redis.storage.MemoryDatabase;
 
 import java.io.IOException;
@@ -23,10 +28,16 @@ public class ClientHandler {
 
     private final CommandExecuter executer;
 
+    private final PubSubManager pubSubManager;
+
+    private final ReplicaManager replicaManager;
+
     private final RESPResponseEncoder responseEncoder = new RESPResponseEncoder();
 
-    public ClientHandler(CommandExecuter executer) {
+    public ClientHandler(CommandExecuter executer, PubSubManager pubSubManager, ReplicaManager replicaManager) {
         this.executer = executer;
+        this.pubSubManager = pubSubManager;
+        this.replicaManager = replicaManager;
     }
 
 
@@ -37,6 +48,9 @@ public class ClientHandler {
         if (bytesRead == -1) {
             reader.remove(clientChannel);
             // when client close the terminal ,that is conn closed ,so close the conn
+
+            pubSubManager.removeClient(clientChannel);
+
             clientChannel.close();
             return;
         }
@@ -65,7 +79,71 @@ public class ClientHandler {
         Command command = parser.parse(request);// resp
         System.out.println("Command : "+command);
 
-        Response result = executer.execute(command);
+        String commandName = command.commandName().toUpperCase();
+
+        if (commandName.equals("REPLICA")) {
+            replicaManager.addReplica(clientChannel);
+            Response response = new SimpleStringResponse("OK");
+            String resp = responseEncoder.encode(response);
+            clientChannel.write(ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8)));
+            return;
+        }
+
+        if (commandName.equals("SUBSCRIBE")) {  // for subscribe
+            if (command.arguments().size() != 1) {
+                Response error = new ErrorResponse("SUBSCRIBE requires channel");
+                String resp = responseEncoder.encode(error);
+                clientChannel.write(ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8)));
+                return;
+            }
+
+            String channel = command.arguments().get(0);
+            pubSubManager.subscribe(channel, clientChannel);
+            Response ok = new SimpleStringResponse("OK");
+            String resp = responseEncoder.encode(ok);
+            clientChannel.write(ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8)));
+            return;
+        }
+
+        if (commandName.equals("PUBLISH")) {
+            if (command.arguments().size() != 2) {
+                Response error = new ErrorResponse("PUBLISH requires channel and message");
+                String resp = responseEncoder.encode(error);
+                clientChannel.write(ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8)));
+                return;
+            }
+
+            String channel = command.arguments().get(0);
+            String message = command.arguments().get(1);
+
+            int delivered = pubSubManager.publish(channel, message);
+
+            Response response = new IntegerResponse(delivered);
+
+            String resp = responseEncoder.encode(response);
+            clientChannel.write(ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8)));
+            return;
+        }
+
+        if (commandName.equals("UNSUBSCRIBE")) {
+            if (command.arguments().size() != 1) {
+                Response error = new ErrorResponse("UNSUBSCRIBE requires channel");
+                String resp = responseEncoder.encode(error);
+                clientChannel.write(ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8)));
+                return;
+            }
+
+            String channel = command.arguments().get(0);
+            pubSubManager.unsubscribe(channel, clientChannel);
+            Response ok = new SimpleStringResponse("OK");
+            String resp = responseEncoder.encode(ok);
+            clientChannel.write(ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8)));
+            return;
+        }
+
+
+
+        Response result = executer.execute(command); // for normal commands ,
 
         String resp = responseEncoder.encode(result);
         ByteBuffer response = ByteBuffer.wrap(resp.getBytes(StandardCharsets.UTF_8));

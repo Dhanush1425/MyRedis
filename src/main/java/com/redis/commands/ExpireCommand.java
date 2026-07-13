@@ -3,6 +3,8 @@ package com.redis.commands;
 import com.redis.persistence.AppendOnlyFile;
 import com.redis.persistence.RecoveryContext;
 import com.redis.protocol.RESPCommandEncoder;
+import com.redis.replication.ReplicaManager;
+import com.redis.replication.ReplicationContext;
 import com.redis.response.ErrorResponse;
 import com.redis.response.IntegerResponse;
 import com.redis.response.Response;
@@ -14,15 +16,18 @@ public class ExpireCommand implements CommandHandler {
 
     private final MemoryDatabase database;
     private final AppendOnlyFile aof;
+    private final ReplicaManager replicaManager;
+
 
     private final RESPCommandEncoder encoder =
             new RESPCommandEncoder();
 
-    public ExpireCommand(MemoryDatabase database, AppendOnlyFile aof) {
+    public ExpireCommand(MemoryDatabase database, AppendOnlyFile aof, ReplicaManager replicaManager) {
 
         this.database = database;
 
         this.aof = aof;
+        this.replicaManager = replicaManager;
     }
 
     @Override
@@ -45,7 +50,9 @@ public class ExpireCommand implements CommandHandler {
 
         if (!RecoveryContext.isRecovering()) {
             aof.append(resp);
-        }
+            if (!ReplicationContext.isReplicating()) {
+                replicaManager.broadcast(resp);
+            }        }
 
         boolean success = database.expire(key, seconds);
 
