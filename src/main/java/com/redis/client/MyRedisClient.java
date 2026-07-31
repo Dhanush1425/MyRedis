@@ -60,12 +60,28 @@ public class MyRedisClient {
         return (Long) execute("TTL", List.of(key));
     }
 
+    public boolean setnx(String key, String value) throws IOException {
+        long result = (Long) execute("SETNX", List.of(key, value));
+        return result == 1;
+    }
+
+    public boolean exists(String key) throws IOException {
+        long result = (Long) execute("EXISTS", List.of(key));
+        return result == 1;
+    }
+
+    public long incr(String key) throws IOException {
+        return (Long) execute("INCR", List.of(key));
+    }
+
+    public long decr(String key) throws IOException {
+        return (Long) execute("DECR", List.of(key));
+    }
+
     /**
      * Executes a Redis command.
      */
-    private Object execute(String command, List<String> arguments)
-            throws IOException {
-
+    private Object execute(String command, List<String> arguments) throws IOException {
         String request = ClientEncoder.encode(command, arguments);
         connection.send(request);
         String response = connection.receive();

@@ -17,11 +17,26 @@ public class Main {
 //        System.out.println(client.set("name","Gugan"));
 //        System.out.println(client.del("name"));
 //        System.out.println(client.del("name"));
-        System.out.println(client.set("name","julie"));
-        client.expire("name", 30);
-        System.out.println(client.ttl("name"));
-        Thread.sleep(5000);
-        System.out.println(client.ttl("name"));
+
+
+//        System.out.println(client.set("name","julie"));
+//        client.expire("name", 30);
+//        System.out.println(client.ttl("name"));
+//        Thread.sleep(5000);
+//        System.out.println(client.ttl("name"));
+
+//        System.out.println(client.setnx("name", "gugu"));
+//        System.out.println(client.setnx("name", "tabitha"));
+//        System.out.println(client.get("name"));
+
+        System.out.println(client.exists("name"));
+        System.out.println(client.incr("counter"));
+        System.out.println(client.incr("counter"));
+        System.out.println(client.incr("counter"));
+        System.out.println(client.decr("counter"));
+        System.out.println(client.decr("counter"));
+        System.out.println(client.get("counter"));
+
         System.out.println(response);
 
 //        String ping = ClientEncoder.encode("PING", List.of());

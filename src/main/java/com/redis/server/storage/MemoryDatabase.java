@@ -192,4 +192,52 @@ public class MemoryDatabase {
         return true;
     }
 
+    public boolean exists(String key) {
+        if (isExpired(key)) {
+            return false;
+        }
+        return storage.containsKey(key);
+    }
+
+    public long increment(String key) {
+        if (isExpired(key)) {
+            storage.remove(key);
+        }
+        RedisObject object = storage.get(key);
+        if (object == null) {
+            storage.put(key, new RedisString("1"));
+            return 1;
+        }
+        if (!(object instanceof RedisString)) {
+            throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+        }
+
+        RedisString stringObject = (RedisString) object;
+        long value = Long.parseLong(stringObject.getValue());
+        value++;
+        storage.put(key, new RedisString(String.valueOf(value)));
+        return value;
+    }
+
+    public long decrement(String key) {
+        if (isExpired(key)) {
+            storage.remove(key);
+        }
+
+        RedisObject object = storage.get(key);
+        if (object == null) {
+            storage.put(key, new RedisString("-1"));
+            return -1;
+        }
+
+        if (!(object instanceof RedisString)) {throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+        }
+
+        RedisString stringObject = (RedisString) object;
+        long value = Long.parseLong(stringObject.getValue());
+        value--;
+        storage.put(key, new RedisString(String.valueOf(value)));
+        return value;
+    }
+
 }

@@ -44,6 +44,14 @@ public class CommandExecuter {
         handlers.put("RPOP", new RPopCommand(database, aof, replicaManager));
 
         handlers.put("LRANGE", new LRangeCommand(database));
+
+        handlers.put("SETNX", new SETNXCommand(database));
+
+        handlers.put("EXISTS", new EXISTSCommand(database));
+
+        handlers.put("INCR", new INCRCommand(database));
+
+        handlers.put("DECR", new DECRCommand(database));
     }
 
     public Response execute(Command command) {
